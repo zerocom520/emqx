@@ -689,6 +689,9 @@ deliver({disconnect, _ReasonCode}, PState) ->
 -spec(send(emqx_mqtt_types:packet(), state()) -> {ok, state()} | {error, term()}).
 send(Packet = ?PACKET(Type), PState = #pstate{proto_ver = Ver, sendfun = Send}) ->
     case Send(Packet, #{version => Ver}) of
+        ok ->
+            trace(send, Packet),
+            {ok, PState};
         {ok, Data} ->
             trace(send, Packet),
             emqx_metrics:sent(Packet),
@@ -944,7 +947,7 @@ do_flapping_detect(Action, #pstate{zone = Zone,
                                    client_id = ClientId,
                                    enable_flapping_detect = true}) ->
     BanExpiryInterval = emqx_zone:get_env(Zone, flapping_ban_expiry_interval, 3600000),
-    Threshold = emqx_zone:get_env(Zone, flapping_threshold, 20),
+    Threshold = emqx_zone:get_env(Zone, flapping_threshold, {10, 60}),
     Until = erlang:system_time(second) + BanExpiryInterval,
     case emqx_flapping:check(Action, ClientId, Threshold) of
         flapping ->

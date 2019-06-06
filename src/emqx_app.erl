@@ -28,13 +28,7 @@
 
 start(_Type, _Args) ->
     create_mnesia_dir("data/mnesia"),
-    emqx_gen_config:generate_config("etc/emqx.conf", "etc/plugins", "data/configs", "releases/3.1.1/schema"),
-    %% We'd like to configure the primary logger level here, rather than set the
-    %%   kernel config `logger_level` before starting the erlang vm.
-    %% This is because the latter approach an annoying debug msg will be printed out:
-    %%   "[debug] got_unexpected_message {'EXIT',<0.1198.0>,normal}"
-    logger:set_primary_config(level, application:get_env(kernel, primary_log_level, error)),
-
+    emqx_gen_config:generate_config("etc/emqx.conf", "etc/plugins", "data/configs", "releases/3.1.2/schema"),
     print_banner(),
     ekka:start(),
     {ok, Sup} = emqx_sup:start_link(),
