@@ -14,7 +14,7 @@
 %% limitations under the License.
 %%--------------------------------------------------------------------
 
--module(emqx_mod_presence_SUITE).
+-module(emqx_mod_events_SUITE).
 
 -compile(export_all).
 -compile(nowarn_export_all).
@@ -34,9 +34,9 @@ init_per_suite(Config) ->
 end_per_suite(_Config) ->
     emqx_ct_helpers:stop_apps([emqx]).
 
-%% Test case for emqx_mod_presence
-t_mod_presence(_) ->
-    ok = emqx_mod_presence:load([{qos, ?QOS_1}]),
+%% Test case for emqx_mod_events
+t_mod_events(_) ->
+    ok = emqx_mod_events:load([{qos, ?QOS_1}]),
     {ok, C1} = emqtt:start_link([{clientid, <<"monsys">>}]),
     {ok, _} = emqtt:connect(C1),
     {ok, _Props, [?QOS_1]} = emqtt:subscribe(C1, <<"$SYS/brokers/+/clients/#">>, qos1),
@@ -44,20 +44,43 @@ t_mod_presence(_) ->
     {ok, C2} = emqtt:start_link([{clientid, <<"clientid">>},
                                  {username, <<"username">>}]),
     {ok, _} = emqtt:connect(C2),
-    ok = recv_and_check_presence(<<"clientid">>, <<"connected">>),
+    ok = recv_and_check_events(<<"clientid">>, <<"connected">>),
     %% Disconnected Presence
     ok = emqtt:disconnect(C2),
-    ok = recv_and_check_presence(<<"clientid">>, <<"disconnected">>),
+    ok = recv_and_check_events(<<"clientid">>, <<"disconnected">>),
     ok = emqtt:disconnect(C1),
-    ok = emqx_mod_presence:unload([{qos, ?QOS_1}]).
+    ok = emqx_mod_events:unload([{qos, ?QOS_1}]).
 
-t_mod_presence_reason(_) ->
-    ?assertEqual(normal, emqx_mod_presence:reason(normal)),
-    ?assertEqual(discarded, emqx_mod_presence:reason({shutdown, discarded})),
-    ?assertEqual(tcp_error, emqx_mod_presence:reason({tcp_error, einval})),
-    ?assertEqual(internal_error, emqx_mod_presence:reason(<<"unknown error">>)).
+t_mod_events_reason(_) ->
+    ?assertEqual(normal, emqx_mod_events:reason(normal)),
+    ?assertEqual(discarded, emqx_mod_events:reason({shutdown, discarded})),
+    ?assertEqual(tcp_error, emqx_mod_events:reason({tcp_error, einval})),
+    ?assertEqual(internal_error, emqx_mod_events:reason(<<"unknown error">>)).
 
-recv_and_check_presence(ClientId, Presence) ->
+t_mod_hook_point(_) ->
+    ?assertEqual('client.connected', emqx_mod_events:hook_point("client_connected")),
+    ?assertEqual('client.disconnected', emqx_mod_events:hook_point("client_disconnected")),
+    ?assertEqual('session.subscribed', emqx_mod_events:hook_point("session_subscribed")),
+    ?assertEqual('session.unsubscribed', emqx_mod_events:hook_point("session_unsubscribed")),
+    %?assertEqual('message.acked', emqx_mod_events:hook_point("message_acked")),
+    %?assertEqual('message.dropped', emqx_mod_events:hook_point("message_dropped")),
+    %?assertEqual('message.delivered', emqx_mod_events:hook_point("message_delivered")),
+    ?assertError(unsupported_event, emqx_mod_events:hook_point("message_notexists")),
+    ?assertError(invalid_event, emqx_mod_events:hook_point("notexists")).
+
+t_mod_hook_fun(_) ->
+    Funcs = emqx_mod_events:module_info(exports),
+    [?assert(lists:keymember(emqx_mod_events:hook_fun(Event), 1, Funcs)) ||
+     Event <- ["client_connected",
+               "client_disconnected",
+               "session_subscribed",
+               "session_unsubscribed"
+               %"message_acked",
+               %"message_dropped",
+               %"message.delivered"
+              ]].
+
+recv_and_check_events(ClientId, Presence) ->
     {ok, #{qos := ?QOS_1, topic := Topic, payload := Payload}} = receive_publish(100),
     ?assertMatch([<<"$SYS">>, <<"brokers">>, _Node, <<"clients">>, ClientId, Presence],
                  binary:split(Topic, <<"/">>, [global])),

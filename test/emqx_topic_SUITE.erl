@@ -31,6 +31,7 @@
         , join/1
         , words/1
         , systop/1
+        , eventstop/1
         , feed_var/3
         , parse/1
         , parse/2
@@ -191,6 +192,10 @@ t_systop(_) ->
     ?assertEqual(SysTop1, systop('xyz')),
     SysTop2 = iolist_to_binary(["$SYS/brokers/", atom_to_list(node()), "/abc"]),
     ?assertEqual(SysTop2,systop(<<"abc">>)).
+
+t_eventstop(_) ->
+    ?assertEqual(<<"$events/zxy">>, eventstop('zxy')),
+    ?assertEqual(<<"$events/abc">>, eventstop(<<"abc">>)).
 
 t_feed_var(_) ->
     ?assertEqual(<<"$queue/client/clientId">>,

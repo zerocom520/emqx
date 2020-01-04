@@ -29,6 +29,7 @@
         , prepend/2
         , feed_var/3
         , systop/1
+        , eventstop/1
         , parse/1
         , parse/2
         ]).
@@ -188,6 +189,12 @@ systop(Name) when is_atom(Name); is_list(Name) ->
     iolist_to_binary(lists:concat(["$SYS/brokers/", node(), "/", Name]));
 systop(Name) when is_binary(Name) ->
     iolist_to_binary(["$SYS/brokers/", atom_to_list(node()), "/", Name]).
+
+%% @doc '$events' Topic.
+eventstop(Name) when is_atom(Name); is_list(Name) ->
+    iolist_to_binary(lists:concat(["$events/", Name]));
+eventstop(Name) when is_binary(Name) ->
+    iolist_to_binary(["$events/", Name]).
 
 -spec(feed_var(binary(), binary(), binary()) -> binary()).
 feed_var(Var, Val, Topic) ->

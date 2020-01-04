@@ -1795,12 +1795,12 @@ end}.
 %% Modules
 %%--------------------------------------------------------------------
 
-{mapping, "module.presence", "emqx.modules", [
+{mapping, "module.events.$event_name", "emqx.modules", [
   {default, off},
   {datatype, flag}
 ]}.
 
-{mapping, "module.presence.qos", "emqx.modules", [
+{mapping, "module.events.qos", "emqx.modules", [
   {default, 1},
   {datatype, integer},
   {validators, ["range:0-2"]}
@@ -1845,11 +1845,15 @@ end}.
                     {rewrite, list_to_binary(Topic), list_to_binary(Re), list_to_binary(Dest)}
                 end, Rules)
   end,
+  Events = fun() ->
+      List = cuttlefish_variable:filter_by_prefix("module.events", Conf),
+      lists:sort([EventName|| {[_,"events",EventName], true} <- List, EventName =/= "qos"])
+  end,
   lists:append([
-    case cuttlefish:conf_get("module.presence", Conf) of %% Presence
-        true  -> [{emqx_mod_presence, [{qos, cuttlefish:conf_get("module.presence.qos", Conf, 1)}]}];
-        false -> []
-    end,
+    [{emqx_mod_events,
+      [{enabled_events, Events()},
+       {qos, cuttlefish:conf_get("module.events.qos", Conf, 1)}
+      ]}],
     case cuttlefish:conf_get("module.subscription", Conf) of %% Subscription
         true  -> [{emqx_mod_subscription, Subscriptions()}];
         false -> []
