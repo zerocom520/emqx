@@ -29,5 +29,6 @@ jobs:
             path: _build/test/cover
 
         - name: Send coveralls data
-          run:
+          run: |
+            export DEBUG=1
             make coveralls
