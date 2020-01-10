@@ -1,10 +1,9 @@
 %% -*-: erlang -*-
 
-CONFIG1 = case os:getenv("GITHUB_ACTION") of
+CONFIG1 = case os:getenv("GITHUB_SHA") of
               false -> CONFIG;
-              JobId ->
-                  %JobId = os:getenv("GITHUB_ACTION"),
-                  [{coveralls_service_job_id, JobId},
+              Sha ->
+                  [{coveralls_service_job_id, Sha},
                    {coveralls_coverdata, "_build/test/cover/*.coverdata"},
                    {coveralls_service_name , "github-action"} | CONFIG]
           end,
