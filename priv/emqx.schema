@@ -1991,6 +1991,7 @@ end}.
 %%--------------------------------------------------------------------
 %% VM Monitor
 %%--------------------------------------------------------------------
+
 {mapping, "vm_mon.check_interval", "emqx.vm_mon", [
   {default, 30},
   {datatype, {duration, s}}
@@ -2010,3 +2011,18 @@ end}.
     Configs = cuttlefish_variable:filter_by_prefix("vm_mon", Conf),
     [{list_to_atom(Name), Value} || {[_, Name], Value} <- Configs]
 end}.
+
+%%--------------------------------------------------------------------
+%% Reloader
+%%--------------------------------------------------------------------
+
+{mapping, "reload.interval", "emqx.reload_interval", [
+  {default, "300s"},
+  {datatype, {duration, ms}}
+]}.
+
+{mapping, "reload.logfile", "emqx.reload_logfile", [
+  {default, "reloader.log"},
+  {datatype, string}
+]}.
+
